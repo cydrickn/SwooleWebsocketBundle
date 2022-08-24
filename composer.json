@@ -1,7 +1,7 @@
 {
     "name": "cydrickn/swoole-websocket-bundle",
     "description": "Swoole Websocket for Symfony",
-    "type": "library",
+    "type": "symfony-bundle",
     "license": "MIT",
     "autoload": {
         "psr-4": {

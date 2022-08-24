@@ -3,12 +3,11 @@
 namespace Cydrickn\SwooleWebsocketBundle\Event;
 
 use Cydrickn\SwooleWebsocketBundle\Websocket\Server;
-use Swoole\WebSocket\Frame;
 use Symfony\Contracts\EventDispatcher\Event;
 
-class MessageEvent extends Event
+class CloseEvent extends Event
 {
-    public function __construct(public readonly Server $server, public readonly Frame $frame)
+    public function __construct(public readonly Server $server, public readonly int $fd)
     {
         // Nothing
     }

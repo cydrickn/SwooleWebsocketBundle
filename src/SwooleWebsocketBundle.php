@@ -2,8 +2,14 @@
 
 namespace Cydrickn\SwooleWebsocketBundle;
 
-use Symfony\Component\HttpKernel\Bundle\Bundle;
+use Cydrickn\SwooleWebsocketBundle\DependencyInjection\SwooleWebsocketExtension;
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
+use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
-class SwooleWebsocketBundle extends Bundle
+class SwooleWebsocketBundle extends AbstractBundle
 {
+    public function getContainerExtension(): ?ExtensionInterface
+    {
+        return new SwooleWebsocketExtension();
+    }
 }

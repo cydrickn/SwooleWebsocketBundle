@@ -1,0 +1,15 @@
+parameters:
+# nothing to declare
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  Cydrickn\SwooleWebsocketBundle\:
+    resource: '../src'
+    exclude:
+      - '../src/DependencyInjection/'
+      - '../src/Kernel.php'
+      - '../src/Runtime/'
+      - '../src/Event/'
+      - '../src/Websocket/'
