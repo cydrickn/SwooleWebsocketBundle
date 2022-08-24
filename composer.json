@@ -1,0 +1,25 @@
+{
+    "name": "cydrickn/swoole-websocket-bundle",
+    "description": "Swoole Websocket for Symfony",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Cydrickn\\SwooleWebsocketBundle\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Cydrick Nonog",
+            "email": "cydrick.dev@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "symfony/framework-bundle": "^6.1",
+        "symfony/console": "^6.1"
+    },
+    "require-dev": {
+        "openswoole/ide-helper": "^4.11"
+    }
+}
