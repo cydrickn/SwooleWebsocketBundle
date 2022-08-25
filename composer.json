@@ -21,5 +21,8 @@
     },
     "require-dev": {
         "openswoole/ide-helper": "^4.11"
+    },
+    "suggest": {
+        "symfony/runtime": "When you plan to use this bundle with runtime"
     }
 }

@@ -15,19 +15,26 @@ use Symfony\Component\HttpKernel\Kernel;
 
 class Server
 {
+    protected const DEFAULT_OPTIONS = [
+        'host' => '127.0.0.1',
+        'port' => 8000,
+        'mode' => 2, // SWOOLE_PROCESS
+        'sock_type' => 1, // SWOOLE_SOCK_TCP
+        'settings' => [],
+    ];
+
     protected ?WebsocketServer $server;
     protected bool $initialized;
     protected array $config;
     protected bool $runtime;
-    protected ?Kernel $kernel;
+    protected ?EventDispatcherInterface $eventDispatcher;
 
-    public function __construct(private EventDispatcherInterface $eventDispatcher, array $config = [])
+    public function __construct(array $config = [])
     {
-        $this->config = ['host' => '127.0.0.1', 'port' => 8080, ...$config];
+        $this->config = array_replace_recursive(self::DEFAULT_OPTIONS, $config);
         $this->server = null;
         $this->initialized = false;
-        $this->runtime = false;
-        $this->kernel = null;
+        $this->eventDispatcher = null;
     }
 
     public function init()
@@ -37,6 +44,7 @@ class Server
         }
 
         $this->setServer(new WebsocketServer($this->config['host'], $this->config['port'], SWOOLE_PROCESS), true);
+        $this->server->set($this->config['settings']);
     }
 
     public function setServer(WebsocketServer $server, bool $setInitialized = true): void
@@ -47,33 +55,27 @@ class Server
         }
     }
 
-    public function beforeStart(): void
+    public function setEvent(): void
     {
         $this->server->on('Open', function (WebsocketServer $server, Request $request) {
-            $eventDispatcher = $this->eventDispatcher;
-            if ($this->runtime) {
-                $this->kernel->boot();
-                $eventDispatcher = $this->kernel->getContainer()->get(EventDispatcherInterface::class);
+            if ($this->eventDispatcher === null) {
+                return;
             }
-            $eventDispatcher->dispatch(new OpenEvent($this, $request), 'websocket:open');
+            $this->eventDispatcher->dispatch(new OpenEvent($this, $request));
         });
 
         $this->server->on('Message', function (WebsocketServer $server, Frame $frame) {
-            $eventDispatcher = $this->eventDispatcher;
-            if ($this->runtime) {
-                $this->kernel->boot();
-                $eventDispatcher = $this->kernel->getContainer()->get(EventDispatcherInterface::class);
+            if ($this->eventDispatcher === null) {
+                return;
             }
-            $eventDispatcher->dispatch(new MessageEvent($this, $frame), 'websocket:message');
+            $this->eventDispatcher->dispatch(new MessageEvent($this, $frame));
         });
 
         $this->server->on('Close', function (WebsocketServer $server, int $fd) {
-            $eventDispatcher = $this->eventDispatcher;
-            if ($this->runtime) {
-                $this->kernel->boot();
-                $eventDispatcher = $this->kernel->getContainer()->get(EventDispatcherInterface::class);
+            if ($this->eventDispatcher === null) {
+                return;
             }
-            $eventDispatcher->dispatch(new CloseEvent($this, $fd), 'websocket:close');
+            $this->eventDispatcher->dispatch(new CloseEvent($this, $fd));
         });
     }
 
@@ -84,7 +86,6 @@ class Server
 
     public function start(): void
     {
-        $this->beforeStart();
         $this->server->start();
     }
 
@@ -103,13 +104,8 @@ class Server
         $this->config['port'] = $port;
     }
 
-    public function setRuntime(bool $runtime): void
+    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
     {
-        $this->runtime = $runtime;
-    }
-
-    public function setKernel(Kernel $kernel): void
-    {
-        $this->kernel = $kernel;
+        $this->eventDispatcher = $eventDispatcher;
     }
 }
