@@ -143,19 +143,25 @@ If you want to hot reload? You can just use different package and once it detect
 
 **Example:**
 
-Using this https://github.com/spatie/file-system-watcher
+Using this https://github.com/cydrickn/php-watcher
 
 ```php
 <?php
 
-use Spatie\Watcher\Watch;
+require_once './vendor/autoload.php';
 
-Watch::path($directory)
-    ->onAnyChange(function (string $newFilePath) {
+$watcher = new \Cydrickn\PHPWatcher\Watcher(
+    [__DIR__],
+    [__DIR__ . '/vendor/', __DIR__ . '/.idea/', __DIR__ . '/var/cache/', __DIR__ . '/var/log/'],
+    function () {
         $ch = curl_init("http://127.0.0.1:8000/ws/admin/restart");
         curl_exec($ch);
-    })
-    ->start();
+        curl_close($ch);
+    }
+);
+
+$watcher->tick();
+
 ```
 
 ## TODO
