@@ -120,55 +120,96 @@ return function (array $context) {
 
 > Also instead of having to server for websocket and http, you can just enable the `Serve HTTP`, by setting the `serve_http` to true
 
-#### Hot reloading
+## Hot reloading
 
-So far if you are in dev environment it is really annoying that you need to restart the server everytime since when a swoole
-already include the file it will be already in its memory.
+We already include a hor reloading for this bundle.
+To enable it you need to first require [cydrickn/php-watcher](https://packagist.org/packages/cydrickn/php-watcher)
 
-In this case we need to call the reload of swoole to reload the workers https://openswoole.com/docs/modules/swoole-server-reload.
+Hot reloading is only available if you are using runtime
 
-In this bundle this feature was already implemented, but it will not automatically call the function. You need to reload it via
-calling the api `/ws/admin/restart`.
+```shell
+composer require cydrickn/php-watcher
+```
 
-E.g. If your server is running at `127.0.0.1:8000`, you can just open this link `http://127.0.0.1:8000/ws/admin/restart`
+Now add to your `APP_RUNTIME_OPTIONS` the `hotReload`
+The `basePath` should be your project folder
 
-Reason why this bundle does not include the auto reloading? The reason is just to focus the code of this bundle to only in server.
+```php
+$_SERVER['APP_RUNTIME_OPTIONS'] = [
+    'host' => '0.0.0.0',
+    'port' => 8000,
+    'mode' => SWOOLE_PROCESS,
+    'hotReload'=> [
+        'enabled' => true,
+        'basePath' => dirname(__DIR__),
+    ],
+    'settings' => [
+        \Swoole\Constant::OPTION_WORKER_NUM => swoole_cpu_num() * 2,
+        \Swoole\Constant::OPTION_ENABLE_STATIC_HANDLER => true,
+    ],
+];
+```
 
-> Also note that `/ws/admin/restart` will only available in dev environment.
-> 
-> This url is only available for runtime.
-> Due to that in command the container have run first before the server have been initialized.
+## Socket IO
 
-If you want to hot reload? You can just use different package and once it detected there are changes then call the url.
+In this bundle you can also enable using socket.io implementation, to enable it first you need to install
+[cydrickn/socketio](https://packagist.org/packages/cydrickn/socketio)
 
-**Example:**
+This implementation is only available if you are using runtime
 
-Using this https://github.com/cydrickn/php-watcher
+```shell
+composer require cydrickn/socketio
+```
+
+Now add to your `APP_RUNTIME_OPTIONS` set the `socketio` to `true`
+
+```php
+$_SERVER['APP_RUNTIME_OPTIONS'] = [
+    'socketio' => true,
+    'host' => '0.0.0.0',
+    'port' => 8000,
+    'mode' => SWOOLE_PROCESS,
+    'settings' => [
+        \Swoole\Constant::OPTION_WORKER_NUM => swoole_cpu_num() * 2,
+        \Swoole\Constant::OPTION_ENABLE_STATIC_HANDLER => true,
+    ],
+];
+```
+
+### Adding a route to socket io
+
+For pure socket io you will do this
+```php
+$server->on('connection', function (\Cydrickn\SocketIO\Socket $socket) {
+    $socket->emit('hello', 'world');
+});
+
+$server->on('chat', function (\Cydrickn\SocketIO\Socket $socket, $message) {
+    $socket->broadcast()->emit('chat', $message);
+});
+```
+
+You will use the Attribute Route of this bundle `Cydrickn\SwooleWebsocketBundle\Attribute\RouteAttribute`
+In any of your service
 
 ```php
 <?php
+namespace App\Controller;
 
-require_once './vendor/autoload.php';
+use Cydrickn\SwooleWebsocketBundle\Attribute\RouteAttribute;
 
-$watcher = new \Cydrickn\PHPWatcher\Watcher(
-    [__DIR__],
-    [__DIR__ . '/vendor/', __DIR__ . '/.idea/', __DIR__ . '/var/cache/', __DIR__ . '/var/log/'],
-    function () {
-        $ch = curl_init("http://127.0.0.1:8000/ws/admin/restart");
-        curl_exec($ch);
-        curl_close($ch);
-    }
-);
-
-$watcher->tick();
-
+class SocketController
+{
+   #[RouteAttribute(path: 'connection')]
+   public function connection(\Cydrickn\SocketIO\Socket $socket)
+   {
+      $socket->emit('hello', 'world');
+   }
+   
+   #[RouteAttribute(path: 'chat')]
+   public function anotherMethod(\Cydrickn\SocketIO\Socket $socket, $message)
+   {
+      $socket->broadcast()->emit('chat', $message);
+   }
+}
 ```
-
-## TODO
-
-- [ ] Add Routing of message
-- [X] Support Symfony Runtime
-- [ ] Support PHP >= 7
-- [ ] Support Symfony >= 4
-- [ ] Create javascript library
-- [ ] Supports socket.io javascript

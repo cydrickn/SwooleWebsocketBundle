@@ -4,7 +4,7 @@ namespace Cydrickn\SwooleWebsocketBundle\Factory;
 
 class ServerFactory
 {
-    public static function handle()
+    public function getServer()
     {
         return $GLOBALS['runtimeServer'];
     }
