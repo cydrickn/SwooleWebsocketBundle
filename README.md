@@ -213,3 +213,8 @@ class SocketController
    }
 }
 ```
+
+## Related Package
+
+- [PHP Watcher](https://github.com/cydrickn/php-watcher)
+- [PHP Socket IO](https://github.com/cydrickn/SocketIO)
